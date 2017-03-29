@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Neutron's config配置文件和如何执行</title>
+</head>
+<body>
+<h2>
+    1、Neutron配置生效过程
+</h2>
+<p class="MsoNormal" align="left" style="background:white;">
+    当<span> Neutron L2 Agent </span>（<span>OVS Agent </span>或者<span> Linux Bridge agent</span>）在计算和网络节点上启动时，它会根据各种配置在节点上创建各种<span> bridge</span>。以<span> OVS Agent </span>为例，<span></span>
+</p>
+<p class="MsoNormal" align="left" style="background:white;">
+    （<span>1</span>）创建<span> intergration brige</span>（默认是<span> br-int</span>）；如果<span>&nbsp;enable_tunneling = true </span>的话，创建 tunnel bridge （默认是 br-tun）。
+</p>
+<p class="MsoNormal" align="left" style="background:white;">
+    （2）根据 bridge_mappings，配置每一个 VLAN 和 Flat 网络使用的 physical
+    network interface 对应的预先创建的 OVS bridge。
+</p>
+<p class="MsoNormal" align="left" style="background:white;">
+    （3）所有虚机的 VIF 都是连接到 integration bridge。同一个虚拟网络上的 VM VIF 共享一个本地 VLAN （local VLAN）。Local VLAN ID 被映射到虚拟网络对应的物理网络的 segmentation_id。
+</p>
+<p class="MsoNormal" align="left" style="background:white;">
+    （4）对于 GRE 类型的虚拟网络，使用 LSI （Logical
+    Switch&nbsp;identifier）来区分隧道（tunnel）内的租户网络流量（tenant traffic）。这个隧道的两端都是每个物理服务器上的 tunneling bridge。使用 Patch port 来将 br-int 和 br-tun 连接起来。
+</p>
+<p class="MsoNormal" align="left" style="background:white;">
+    （5）对于每一个 VLAN 或者 Flat 类型的网络，使用一个 veth 或者一个 patch port 对来连接 br-int 和物理网桥，以及增加 flow rules等。
+</p>
+<p class="MsoNormal" align="left" style="background:white;">
+    （6）最后，Neutron L2 Agent
+    启动后会运行一个RPC循环任务来处理 端口添加、删除和修改。管理员可以通过配置项&nbsp;polling_interval
+    指定该 RPC 循环任务的执行间隔，默认为2秒。
+</p>
+<p class="MsoNormal">
+    <span>&nbsp;</span>
+</p>
+<h2 style="margin-left:18.0pt;text-indent:-18.0pt;">
+    2、 local.conf example
+</h2>
+<p class="MsoListParagraph" style="margin-left:18.0pt;text-indent:0cm;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>[[local|localrc]]</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>HOST_IP=192.168.56.101</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>SERVICE_HOST=192.168.56.101</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>MYSQL_HOST=192.168.56.101</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>RABBIT_HOST=192.168.56.101</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>GLANCE_HOST=192.168.56.101</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>ADMIN_PASSWORD=password</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>DATABASE_PASSWORD=password</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>RABBIT_PASSWORD=password</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>SERVICE_PASSWORD=password</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>LOGFILE=/opt/stack/logs/stack.sh.log</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>VERBOSE=True</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>LOG_COLOR=True</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>SCREEN_LOGDIR=/opt/stack/logs</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span># Use
+Neutron instead of nova-network</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>disable_service
+n-net</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+q-svc</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+q-dhcp</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+q-agt</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+q-l3</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+c-api</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+c-vol</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_service
+c-sch</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>disable_service
+n-obj</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>disable_service
+c-bak</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>disable_service
+tempest</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>disable_service
+horizon</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>##
+Neutron options</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>Q_USE_SECGROUP=False</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;<span style="background-color:#FFFFFF;"></span></span><span style="color:#E53333;"></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>NEUTRON_CREATE_INITIAL_NETWORKS=False</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span># Open
+vSwitch provider networking configuration</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>Q_USE_PROVIDERNET_FOR_PUBLIC=True</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>OVS_PHYSICAL_BRIDGE=br-ex</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>PUBLIC_BRIDGE=br-ex</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>OVS_BRIDGE_MAPPINGS=</span><span style="color:#E53333;"><span style="color:#E53333;">extern</span></span><span>:br-ex</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>PUBLIC_INTERFACE=enp0s8</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=(network_vlan_ranges=bridge:2001:3000,<span style="color:#E53333;">extern</span>:3001:4000)</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_plugin
+neutron-lbaas https://github.com/openstack/neutron-lbaas.git</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+	<span>enable_plugin
+octavia https://github.com/openstack/octavia.git</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;">
+    <span>ENABLED_SERVICES+=,q-lbaasv2</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:18.0pt;text-indent:0cm;">
+    <span>ENABLED_SERVICES+=,octavia,o-cw,o-hk,o-hm,o-api</span>
+</p>
+</body>
+</html>
