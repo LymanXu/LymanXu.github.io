@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1 style="margin-left:21.0pt;text-align:center;text-indent:0cm;">
+    测量<span>Neutron LBaas</span>性能表现
+</h1>
+<p class="MsoListParagraph" align="center" style="margin-left:21.0pt;text-align:center;text-indent:0cm;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:0cm;">
+    <span>&nbsp;</span>
+</p>
+<h2 style="margin-left:42.0pt;text-indent:-21.0pt;">
+    一、&nbsp; 基本环境搭建
+</h2>
+<p class="MsoListParagraph" style="margin-left:42.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<h3 style="margin-left:21.0pt;">
+    创建网络并起虚拟机
+</h3>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>1.&nbsp; </span>查看当前网络<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>&nbsp;
+&nbsp;&nbsp;openstack network list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    正常情况下无网络为空<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>2. &nbsp;</span>创建网络<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+net-create net1</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    创建好网络，显示网络的信息<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>3. </span>在网络下创建子网<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>openstack subnet
+create subnet1 --network net1 --subnet-range 192.168.2.0/24</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    需要指定子网<span>IP</span>的地址范围，为三级私有网络即可<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    创建成功，显示子网的地址范围<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>4. &nbsp;</span>查看网络<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>openstack
+network list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    显示网络<span>net1</span>的<span>id</span>和<span>name</span>以及<span>subnets</span>的<span>id</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>5. </span>起一台虚拟机<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    起虚拟机需要的参数有<span>netid,imageid,flavored</span>，所以进行查看<span>id</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>openstack
+network list&nbsp;</span>查看<span>netid&nbsp;
+b6a4fe88-a461-4cbf-a97a-a70b467c087c</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>glance
+image-list&nbsp;&nbsp;</span>查看<span>imageid&nbsp;&nbsp;
+cbdd40aa-f045-4cb6-b06a-183b0ba84341</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>nova
+flavor-list&nbsp;&nbsp;&nbsp;</span>查看机器配置信息<span>flavorid</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    找好对应的<span>id</span>后，起虚拟机<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>nova boot
+--flavor 1 --image cbdd40aa-f045-4cb6-b06a-183b0ba84341 --nic
+net-id=b6a4fe88-a461-4cbf-a97a-a70b467c087c vm1</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>6.&nbsp; </span>查看虚拟机是否起成功<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>nova list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    当<span>Status</span>为<span>Active</span>即表示虚拟机起成功，<span>network</span>中显示该虚拟机的<span>IP</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<h3 style="margin-left:21.0pt;">
+    搭建<span>LBaas</span>
+</h3>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>7. Get the UUID
+of the private subnet</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+subnet-list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>8. Create a
+LoadBalancer</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp; </span>将对应私有子网<span> id </span>替换<span> private-subnet</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+lbaas-loadbalancer-create --name lb1 private-subnet</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span style="background-color:#60D978;">问题1：lbaas-loadbalancer provisioning_status: PENDING_CREATE,需要几分钟时间生效</span><span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span style="background-color:#60D978;"><img src="https://lymanxu.github.io./Openstack/Neutron/image/imgLBaasMeasurePerformance/loadbalancer-list.PNG" alt="" /><br />
+</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>9. Create a
+Listener</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+lbaas-listener-create --loadbalancer lb1 --protocol HTTP --protocol-port 80
+--name listener1</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span style="background-color:#60D978;">问题2：创建Listener 提示Invalid state
+PENDING_CREATE of loadbalancer resource 3c6ffcb3-08ae-44e9-b994-5af9a76b49f5，原因就是上面的provisioning_status:还没到active</span><span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>10. Create a
+Pool </span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+lbaas-pool-create --lb-algorithm ROUND_ROBIN --list<span style="background-color:#60D978;"></span>ener listener1 --protocol
+HTTP --name pool1 </span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron lbaas-pool-create
+--lb-algorithm LEAST_CONNECTIONS --listener listener1 --protocol HTTP --name
+pool1</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>11. Create
+Members </span>将之前创建的虚拟机加入<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+lbaas-member-create&nbsp; --subnet
+private-subnet --address &lt;server1-ip&gt; --protocol-port 80 pool1</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+lbaas-member-create&nbsp; --subnet
+private-subnet --address &lt;server2-ip&gt; --protocol-port 80 pool1</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;text-indent:24.0pt;">
+    <span>id of private subnet replaces the private-subnet</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>&nbsp;&nbsp;&nbsp; vm’s
+ip replace &lt;server1-ip&gt;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>12. Create a
+Healthmonitor and associate it with the pool</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>neutron
+lbaas-healthmonitor-create --delay 3 --type HTTP --max-retries 3 --timeout 3
+--pool pool1</span>
+</p>
+<p class="MsoNormal">
+    <span>&nbsp;</span>
+</p>
+<h2 style="margin-left:42.0pt;text-indent:-21.0pt;">
+    二、&nbsp; 验证<span>LBaas validation</span>
+</h2>
+<p class="MsoListParagraph" style="margin-left:42.0pt;text-indent:0cm;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>13. ssh</span>新建的<span>vm</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>sudo ip netns
+exec qdhcp-d836d00a-88f1-4388-a86f-284ab2ce9eac&nbsp;
+ssh <a href="mailto:cirros@192.168.2.5">cirros@192.168.2.5</a></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    user:cirros<br />
+    password:cubswin:)<span> </span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>14. </span>使<span>members</span>模拟<span>web</span>服务器提供服务<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>while true; do
+echo -e 'HTTP/1.0 200 OK\r\nContent-Length: 8\r\n\r\n&lt;servername&gt;' | sudo
+nc -l -p 80&nbsp;; done </span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;&nbsp; example:server1 replace &lt;servername&gt;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>15. </span>访问<span>VIP</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>wget -O -
+http://&lt;server1-ip&gt;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;&nbsp; servers’s IP replace &lt;server1-ip&gt;</span>或者使用<span>VIP</span>替换<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    如果没有将<span>private-subnet </span>和<span>external-net</span>连接起来，可以使用<span>sudo ip
+netns exec xxxx </span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>while true; do
+sudo ip netns exec qdhcp-d836d00a-88f1-4388-a86f-284ab2ce9eac&nbsp; wget -O - http://192.168.2.5
+--append-output=result.txt;done</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<h2 style="margin-left:42.0pt;text-indent:-21.0pt;">
+    三、&nbsp; 验证<span>LBaas</span>在不同配置<span>vms</span>的均衡效果
+</h2>
+<p class="MsoListParagraph" style="margin-left:42.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>16. </span>查看<span>flavor</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>openstack flavor
+list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>17. </span>创建自定义的<span>flavor</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>openstack flavor
+create --public m1.extra_tiny --id auto --ram 256 --disk 0 --vcpus 2</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    常见命令：<span>openstack
+flavor delete flavorId&nbsp; / openstack
+flavor list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span style="background-color:#60D978;">问题3：创建flavore时，要满足本机的硬件配置，虽然flavor创建成功了，不过不满足配置，无法成功boot虚拟机</span><span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>18. </span>使用自定义的<span>flavor</span>起虚拟机<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>nova boot
+--flavor 21--image cbdd40aa-f045-4cb6-b06a-183b0ba84341 --nic net-id=b6a4fe88-a461-4cbf-a97a-a70b467c087c
+vm3</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    然后<span>nova list</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    发现<span>vm3</span>的<span>Status:ERROR</span>，<span>POWER State:NOSTATE</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span style="background-color:#60D978;">问题4：使用自定义的flavor创建的vmStatus一直为ERROR，Power State一直为NOSTATE</span><span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;<img src="https://lymanxu.github.io./Openstack/Neutron/image/imgLBaasMeasurePerformance/question3.PNG" alt="" /></span>
+</p>
+<h2 style="margin-left:21.0pt;">
+	<span><img src="https://lymanxu.github.io./Openstack/Neutron/image/imgLBaasMeasurePerformance/question4.PNG" alt="" /><br />
+</span>
+</h2>
+<h2 style="margin-left:21.0pt;">
+    <span>X</span>、 问题<span>List</span>
+</h2>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <br />
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span style="background-color:#60D978;">问题</span><span style="background-color:#60D978;">4</span><span style="background-color:#60D978;">：创建的vm&nbsp; Status:RROR Power State: NOSTATE</span><span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>查看服务是否正常<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <span>nova service-list</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <span>question41</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>查看管理<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <span>nova hypervisor-list</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>查看硬件配置<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <span>nova hypervisor-show 1</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <span>1</span>是<span>Hypervisor host </span>的<span>ID</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+	<span><img src="https://lymanxu.github.io./Openstack/Neutron/image/imgLBaasMeasurePerformance/question42.PNG" alt="" /><br />
+</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <br />
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    可以看到<span>disk_available_least</span>、<span>memory_mb</span>、<span>vcpus</span>所以如果自定义的<span>flavor</span>的配置大于显示的值，就无法成功创建<span>vm(</span>例如<span>vcpus=1,</span>如果自定义<span>flavor</span>中<span>cpus=2,</span>那么就不能成功<span>boot vm)</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+	<span><br />
+</span>
+</p>
+<p>
+    <br />
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span></span>
+</p>
+</body>
+</html>
