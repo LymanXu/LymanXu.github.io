@@ -5,135 +5,126 @@
     <title>虚拟网络结构和网络配置&流向</title>
 </head>
 <body>
-<p>
-    <br />
-</p>
-<h2 style="margin-left:21.0pt;text-indent:-21.0pt;">
-    <span>一、</span><span>LAN</span>、<span>VLAN</span>
-</h2>
-<p class="MsoListParagraph" style="text-indent:20.0pt;">
-    LAN 表示 Local Area Network，一个LAN代表一个广播域，由Hub和Switch连接CP。一个局部的地理范围内，将各种计算机，外部设备和数据库等互相联接起来组成的计算机通信网。
-</p>
-<p class="MsoListParagraph">
-    <span>VLAN</span><span class="apple-converted-space">表示</span>Virutal LAN，一个VLAN就是一个<span><a href="http://baike.baidu.com/item/%E5%B9%BF%E6%92%AD%E5%9F%9F" target="_blank"><span>广播域</span></a></span>，VLAN之间的通信是通过第3层的<span><a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank"><span>路由器</span></a></span>来完成的。
-</p>
-<h3 style="background:white;">
-    1. VLAN的本质
-</h3>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    第一，要知道192.168.1.2/30和192.168.2.6/30都属于不同的<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>，都必须要通过<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>才能进行访问，凡是不同网段间要互相访问，都必须通过路由器。
-</p>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    第二，VLAN本质就是指一个<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>，之所以叫做虚拟的局域网，是因为它是在虚拟的<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的接口下创建的网段。
-</p>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    下面，给予说明。比如一个<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>只有一个用于<a href="http://baike.baidu.com/item/%E7%BB%88%E7%AB%AF" target="_blank">终端</a>连接的端口（当然这种情况基本不可能发生，只不过简化举例），这个端口被分配了192.168.1.1/24的地址。然而由于公司有两个部门，一个销售部，一个企划部，每个部门要求单独成为一个子网，有单独的服务器。那么当然可以划分为192.168.1.0--127/25、192.168.1.128--255/25。但是<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的物理端口只应该可以分配一个IP地址，那怎样来区分不同<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>了？这就可以在这个物理端口下，创建两个子接口---<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank"><span>逻辑接口</span></a>实现。
-</p>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    比如<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank"><span>逻辑接口</span></a>F0/0.1就分配IP地址192.168.1.1/25，用于销售部，而F0/0.2就分配IP地址192.168.1.129/25，用于企划部。这样就等于用一个物理端口却实现了两个<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank">逻辑接口</a>的功能，这样就将原本只能划分一个<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>的情形，扩展到了可以划分2个或者更多个网段的情形。这些<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>因为是在<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank">逻辑接口</a>下创建的，所以称之为虚拟局域网VLAN。
-</p>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    这是在<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的层次上阐述了VLAN的目的。
-</p>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    第三，将在<a href="http://baike.baidu.com/item/%E4%BA%A4%E6%8D%A2%E6%9C%BA" target="_blank">交换机</a>的层次上阐述VLAN的目的。
-</p>
-<p class="MsoNormal" align="left" style="text-indent:24pt;background:white;">
-    同样，比如两个<a href="http://baike.baidu.com/item/%E4%BA%A4%E6%8D%A2%E6%9C%BA" target="_blank">交换机</a>，如果你想要每个交换机上的端口都分别属于不同的<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>，那么你有几个网段，就提供几个<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的接口，这个时候，虽然在路由器的物理接口上可以<a href="http://baike.baidu.com/item/%E5%AE%9A%E4%B9%89" target="_blank">定义</a>这个接口可以连接哪个网段，但是在交换机的层次上，它并不能区分哪个端口属于哪个网段，那么唯一实现能区分的方法，就是划分VLAN，使用了VLAN就能区分出某个交换机端口的<a href="http://baike.baidu.com/item/%E7%BB%88%E7%AB%AF" target="_blank">终端</a>是属于哪个网段的。
-</p>
-<h3 style="margin-left:18.0pt;text-indent:-18.0pt;">
-    2.&nbsp; VLAN Tag 和交换机端口
-</h3>
-<p class="MsoListParagraph" style="margin-left:18.0pt;text-indent:-18.0pt;">
-    <span></span>
-</p>
-<p class="MsoNormal" style="margin-left:18.0pt;">
-    在以太网帧中加入<span>VLAN tag</span>
-</p>
-<p class="MsoNormal" align="left" style="background:white;">
-    带<span> VLAN </span>的交换机的端口分为两类：<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color:#E56600;"> Access port</span>：这些端口被打上了<span> VLAN Tag</span>。离开交换机的<span> Access port </span>进入计算机的以太帧中没有<span> VLAN Tag</span>，这意味着连接到<span> access ports </span>的机器不会觉察到<span> VLAN </span>的存在。离开计算机进入这些端口的数据帧被打上了<span> VLAN Tag</span>。<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color:#E56600;"> Trunk port</span>： 有多个交换机时，组<span>A</span>中的部分机器连接到<span> switch 1</span>，另一部分机器连接到<span> switch 2</span>。要使得这些机器能够相互访问，你需要连接两台交换机。 要避免使用一根电缆连接每个<span> VLAN </span>的两个端口，我们可以在每个交换机上配置一个<span> VLAN trunk port</span>。<span>Trunk port </span>发出和收到的数据包都带有<span> VLAN header</span>，该<span> header </span>表明了该数据包属于那个<span> VLAN</span>。因此，只需要分别连接两个交换机的一个<span> trunk port </span>就可以转发所有的数据包了。通常来讲，只使用<span> trunk port </span>连接两个交换机，而不是用来连接机器和交换机，因为机器不想看到它们收到的数据包带有<span> VLAN Header</span>。<span></span>
-</p>
-<p class="MsoNormal" align="left">
-    &nbsp;
-</p>
-<h2 style="margin-left:21pt;text-indent:-21pt;">
-    二、Compute
-    node 上的网络配置实例<span style="background-color:#B8D100;"></span>
-</h2>
-<p class="MsoListParagraph" align="left" style="margin-left:21pt;text-indent:-21pt;">
-    <span></span>
-</p>
-<ol>
-    <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
-        Neutron 使用<span> Open vSiwtch</span>。<span></span>
-    </li>
-    <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
-        一台物理服务器，网卡<span> eth1 </span>接入物理交换机，预先配置了网桥<span> br-eth1</span>，也就是<span style="color:#E53333;">从一个物理服务器出来的流量经过网卡</span><span style="color:#E53333;">eth1</span><span style="color:#E53333;">，而与网卡相连的是</span><span style="color:#E53333;">physical Switch</span><span style="color:#E53333;">。</span>
-    </li>
-    <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
-        创建了两个<span> neutron VLAN network</span>，分别使用<span> VLAN ID 101 </span>和<span> 102</span>，连接到<span>br-int</span>上，<span>br-int</span>作为<span>Open switch</span>。<span></span>
-    </li>
-    <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
-        该服务器上运行三个虚机，虚机<span>1 </span>和<span> 2 </span>分别有一个网卡接入<span> network 1</span>；虚机<span>2 </span>和<span> 3 </span>分别有一个网卡接入<span> network 2</span>，一台虚拟机的不同网卡可以接入到不同的<span>VLAN</span>上。<span></span>
-    </li>
-</ol>
-<p class="MsoNormal" align="left" style="background:white;">
-    Neutron 在该计算节点上做的事情：<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    创建了<span> OVS Integration bridge
-br-int</span>。它的四个<span> Access </span>端口中，两个打上了内部<span> Tag 1</span>，连接接入<span> network 1 </span>的两个网卡；另两个端口的<span> VLAN Tag </span>为<span> 2</span>。<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    创建了一对<span> patch port</span>，连接<span> br-int </span>和<span> br-eth1</span>。<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    设置<span> br-int </span>中的<span> flow rules</span>。对从<span> access ports </span>进入的数据帧，加上相应的<span> VLAN Tag</span>，转发到<span> patch port</span>；从<span> patch port </span>进入的数据帧，将<span> VLAN ID 101 </span>修改为<span> 1, 102 </span>修改为<span> 2</span>，再转发到相应的<span> Access ports</span>。<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    设置<span> br-eth1 </span>中的<span> flow rules</span>。从<span> patch port </span>进入的数据帧，将内部<span> VLAN ID 1 </span>修改为<span> 101</span>，内部<span> VLAN ID 2 </span>修改为<span> 102</span>，再从<span> eth1 </span>端口发出。对从<span> eth1 </span>进入的数据帧做相反的处理。<span></span>
-</p>
-<h2 style="margin-left:21.0pt;text-indent:-21.0pt;">
-    三、网络流向
-</h2>
-<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
-    <span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    · &nbsp; &nbsp;&nbsp;<span style="background-color:#E56600;">不同物理服务器上的虚机，如果</span><span style="background-color:#E56600;"> VM1 </span><span style="background-color:#E56600;">和</span><span style="background-color:#E56600;"> VM2 </span><span style="background-color:#E56600;">属于同一个</span><span style="background-color:#E56600;"> tenant network </span><span style="background-color:#E56600;">的同一个</span><span style="background-color:#E56600;">subnet</span><span style="background-color:#E56600;">，那么两者的通信直接经过 物理交换机 进行，不需要做到网络节点</span>。<span></span>
-</p>
-<p class="MsoNormal" style="margin-left:22.5pt;">
-    一台物理服务器的网卡<span>eth1</span>作为流量外出的接口，直接连接到<span>physical Switch</span>上，所以在同一租户网络同一子网上的，虚拟机的通信直接通过二层物理交换机进行通信。<span></span>
-</p>
-<p class="MsoNormal" align="left" style="margin-left:22.5pt;text-indent:-18pt;background:white;">
-    · &nbsp; &nbsp;&nbsp;<span style="background-color:#E56600;">&nbsp;相同物理服务器上的虚机，如果</span><span style="background-color:#E56600;"> VM1 </span><span style="background-color:#E56600;">和</span><span style="background-color:#E56600;"> VM2 </span><span style="background-color:#E56600;">属于同一个</span><span style="background-color:#E56600;"> tenant network </span><span style="background-color:#E56600;">的同一个</span><span style="background-color:#E56600;">subnet</span><span style="background-color:#E56600;">，那么两者的通信直接经过</span><span style="background-color:#E56600;"> br-int </span><span style="background-color:#E56600;">进行。</span><span></span>
-</p>
-<p class="MsoNormal" style="margin-left:21.0pt;">
-    对其他虚机之间数据交换情形，都算作跨子网的数据流向，都需要经过网络节点中的<span> Router </span>进行<span> IP </span>包的路由。（也可以直接使用连接物理交换机的物理路由器）。<span></span>
-</p>
-<p>
-    <br />
-</p>
-<p>
-    <br />
-</p>
-<h2>
-    <p class="MsoNormal" align="left">
+<h1 style="text-align:center;font-family:&quot;margin-left:21pt;text-indent:-21pt;">
+    Neutron 虚拟网络&amp;实现原理&amp;网络配置&amp;数据包流转
+</h1>
+<div class="__kindeditor_paste__">
+    <h1 style="font-family:&quot;margin-left:21pt;text-indent:-21pt;">
+        一、LAN、VLAN
+    </h1>
+    <p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:20pt;">
+        LAN 表示 Local Area Network，一个LAN代表一个广播域，由Hub和Switch连接CP。一个局部的地理范围内，将各种计算机，外部设备和数据库等互相联接起来组成的计算机通信网。
+    </p>
+    <p class="MsoListParagraph" style="font-family:&quot;font-size:medium;">
+        VLAN<span class="apple-converted-space">表示</span>Virutal LAN，一个VLAN就是一个<a href="http://baike.baidu.com/item/%E5%B9%BF%E6%92%AD%E5%9F%9F" target="_blank">广播域</a>，VLAN之间的通信是通过第3层的<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>来完成的。
+    </p>
+    <h2 style="font-family:&quot;background:white;">
+        1. VLAN的本质
+    </h2>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;text-indent:24pt;background:white;">
+        第一，要知道192.168.1.2/30和192.168.2.6/30都属于不同的<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>，都必须要通过<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>才能进行访问，凡是不同网段间要互相访问，都必须通过路由器。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;text-indent:24pt;background:white;">
+        第二，VLAN本质就是指一个<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>，之所以叫做虚拟的局域网，是因为它是在虚拟的<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的接口下创建的网段。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;text-indent:24pt;background:white;">
+        下面，给予说明。比如一个<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>只有一个用于<a href="http://baike.baidu.com/item/%E7%BB%88%E7%AB%AF" target="_blank">终端</a>连接的端口（当然这种情况基本不可能发生，只不过简化举例），这个端口被分配了192.168.1.1/24的地址。然而由于公司有两个部门，一个销售部，一个企划部，每个部门要求单独成为一个子网，有单独的服务器。那么当然可以划分为192.168.1.0--127/25、192.168.1.128--255/25。但是<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的物理端口只应该可以分配一个IP地址，那怎样来区分不同<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>了？这就可以在这个物理端口下，创建两个子接口---<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank">逻辑接口</a>实现。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;text-indent:24pt;background:white;">
+        比如<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank">逻辑接口</a>F0/0.1就分配IP地址192.168.1.1/25，用于销售部，而F0/0.2就分配IP地址192.168.1.129/25，用于企划部。这样就等于用一个物理端口却实现了两个<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank">逻辑接口</a>的功能，这样就将原本只能划分一个<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>的情形，扩展到了可以划分2个或者更多个网段的情形。这些<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>因为是在<a href="http://baike.baidu.com/item/%E9%80%BB%E8%BE%91%E6%8E%A5%E5%8F%A3" target="_blank">逻辑接口</a>下创建的，所以称之为虚拟局域网VLAN。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;text-indent:24pt;background:white;">
+        这是在<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的层次上阐述了VLAN的目的。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;text-indent:24pt;background:white;">
+        第三，将在<a href="http://baike.baidu.com/item/%E4%BA%A4%E6%8D%A2%E6%9C%BA" target="_blank">交换机</a>的层次上阐述VLAN的目的。
+    </p>
+    <h2 style="font-family:&quot;margin-left:18pt;text-indent:-18pt;">
+        同样，比如两个<a href="http://baike.baidu.com/item/%E4%BA%A4%E6%8D%A2%E6%9C%BA" target="_blank">交换机</a>，如果你想要每个交换机上的端口都分别属于不同的<a href="http://baike.baidu.com/item/%E7%BD%91%E6%AE%B5" target="_blank">网段</a>，那么你有几个网段，就提供几个<a href="http://baike.baidu.com/item/%E8%B7%AF%E7%94%B1%E5%99%A8" target="_blank">路由器</a>的接口，这个时候，虽然在路由器的物理接口上可以<a href="http://baike.baidu.com/item/%E5%AE%9A%E4%B9%89" target="_blank">定义</a>这个接口可以连接哪个网段，但是在交换机的层次上，它并不能区分哪个端口属于哪个网段，那么唯一实现能区分的方法，就是划分VLAN，使用了VLAN就能区分出某个交换机端口的<a href="http://baike.baidu.com/item/%E7%BB%88%E7%AB%AF" target="_blank">终端</a>是属于哪个网段的。<br />
+        2.&nbsp; VLAN Tag 和交换机端口
+    </h2>
+    <p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;text-indent:-18pt;">
         <br />
     </p>
-</h2>
-<p>
-    <br />
-</p>
+    <p class="MsoNormal" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+        在以太网帧中加入VLAN tag
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+        带&nbsp;VLAN&nbsp;的交换机的端口分为两类：
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color:#E56600;">&nbsp;Access port</span>：这些端口被打上了&nbsp;VLAN Tag。离开交换机的&nbsp;Access port&nbsp;进入计算机的以太帧中没有&nbsp;VLAN Tag，这意味着连接到&nbsp;access ports&nbsp;的机器不会觉察到&nbsp;VLAN&nbsp;的存在。离开计算机进入这些端口的数据帧被打上了&nbsp;VLAN Tag。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color:#E56600;">&nbsp;Trunk port</span>： 有多个交换机时，组A中的部分机器连接到&nbsp;switch 1，另一部分机器连接到&nbsp;switch 2。要使得这些机器能够相互访问，你需要连接两台交换机。 要避免使用一根电缆连接每个&nbsp;VLAN&nbsp;的两个端口，我们可以在每个交换机上配置一个&nbsp;VLAN trunk port。Trunk port&nbsp;发出和收到的数据包都带有&nbsp;VLAN header，该&nbsp;header&nbsp;表明了该数据包属于那个&nbsp;VLAN。因此，只需要分别连接两个交换机的一个&nbsp;trunk port&nbsp;就可以转发所有的数据包了。通常来讲，只使用&nbsp;trunk port&nbsp;连接两个交换机，而不是用来连接机器和交换机，因为机器不想看到它们收到的数据包带有&nbsp;VLAN Header。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+        &nbsp;
+    </p>
+    <h1 style="font-family:&quot;margin-left:21pt;text-indent:-21pt;">
+        二、Compute node 上的网络配置实例
+    </h1>
+    <p class="MsoListParagraph" align="left" style="font-family:&quot;font-size:medium;margin-left:21pt;text-indent:-21pt;">
+        <br />
+    </p>
+    <ol style="font-family:&quot;font-size:medium;">
+        <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
+            Neutron 使用&nbsp;Open vSiwtch。
+        </li>
+        <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
+            一台物理服务器，网卡&nbsp;eth1&nbsp;接入物理交换机，预先配置了网桥&nbsp;br-eth1，也就是<span style="color:#E53333;">从一个物理服务器出来的流量经过网卡</span><span style="color:#E53333;">eth1</span><span style="color:#E53333;">，而与网卡相连的是</span><span style="color:#E53333;">physical Switch</span><span style="color:#E53333;">。</span>
+        </li>
+        <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
+            创建了两个&nbsp;neutron VLAN network，分别使用&nbsp;VLAN ID 101&nbsp;和&nbsp;102，连接到br-int上，br-int作为Open switch。
+        </li>
+        <li class="MsoNormal" style="color:#4B4B4B;text-align:left;background:white;">
+            该服务器上运行三个虚机，虚机1&nbsp;和&nbsp;2&nbsp;分别有一个网卡接入&nbsp;network 1；虚机2&nbsp;和&nbsp;3&nbsp;分别有一个网卡接入&nbsp;network 2，一台虚拟机的不同网卡可以接入到不同的VLAN上。
+        </li>
+    </ol>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+        Neutron 在该计算节点上做的事情：
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 创建了&nbsp;OVS Integration bridge br-int。它的四个&nbsp;Access&nbsp;端口中，两个打上了内部&nbsp;Tag 1，连接接入&nbsp;network 1&nbsp;的两个网卡；另两个端口的&nbsp;VLAN Tag&nbsp;为&nbsp;2。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 创建了一对&nbsp;patch port，连接&nbsp;br-int&nbsp;和&nbsp;br-eth1。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 设置&nbsp;br-int&nbsp;中的&nbsp;flow rules。对从&nbsp;access ports&nbsp;进入的数据帧，加上相应的&nbsp;VLAN Tag，转发到&nbsp;patch port；从&nbsp;patch port&nbsp;进入的数据帧，将&nbsp;VLAN ID 101&nbsp;修改为&nbsp;1, 102&nbsp;修改为&nbsp;2，再转发到相应的&nbsp;Access ports。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 设置&nbsp;br-eth1&nbsp;中的&nbsp;flow rules。从&nbsp;patch port&nbsp;进入的数据帧，将内部&nbsp;VLAN ID 1&nbsp;修改为&nbsp;101，内部&nbsp;VLAN ID 2&nbsp;修改为&nbsp;102，再从&nbsp;eth1&nbsp;端口发出。对从&nbsp;eth1&nbsp;进入的数据帧做相反的处理。
+    </p>
+    <h1 style="font-family:&quot;margin-left:21pt;text-indent:-21pt;">
+        三、网络流向
+    </h1>
+    <p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:21pt;text-indent:-21pt;">
+        <br />
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        · &nbsp; &nbsp;&nbsp;<span style="background-color:#E56600;">不同物理服务器上的虚机，如果</span><span style="background-color:#E56600;">&nbsp;VM1&nbsp;</span><span style="background-color:#E56600;">和</span><span style="background-color:#E56600;">&nbsp;VM2&nbsp;</span><span style="background-color:#E56600;">属于同一个</span><span style="background-color:#E56600;">&nbsp;tenant network&nbsp;</span><span style="background-color:#E56600;">的同一个</span><span style="background-color:#E56600;">subnet</span><span style="background-color:#E56600;">，那么两者的通信直接经过 物理交换机 进行，不需要做到网络节点</span>。
+    </p>
+    <p class="MsoNormal" style="font-family:&quot;font-size:medium;margin-left:22.5pt;">
+        一台物理服务器的网卡eth1作为流量外出的接口，直接连接到physical Switch上，所以在同一租户网络同一子网上的，虚拟机的通信直接通过二层物理交换机进行通信。
+    </p>
+    <p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;margin-left:22.5pt;text-indent:-18pt;background:white;">
+        · &nbsp; &nbsp;&nbsp;<span style="background-color:#E56600;">&nbsp;相同物理服务器上的虚机，如果</span><span style="background-color:#E56600;">&nbsp;VM1&nbsp;</span><span style="background-color:#E56600;">和</span><span style="background-color:#E56600;">&nbsp;VM2&nbsp;</span><span style="background-color:#E56600;">属于同一个</span><span style="background-color:#E56600;">&nbsp;tenant network&nbsp;</span><span style="background-color:#E56600;">的同一个</span><span style="background-color:#E56600;">subnet</span><span style="background-color:#E56600;">，那么两者的通信直接经过</span><span style="background-color:#E56600;">&nbsp;br-int&nbsp;</span><span style="background-color:#E56600;">进行。</span>
+    </p>
+    <p class="MsoNormal" style="font-family:&quot;font-size:medium;margin-left:21pt;">
+        对其他虚机之间数据交换情形，都算作跨子网的数据流向，都需要经过网络节点中的&nbsp;Router&nbsp;进行&nbsp;IP&nbsp;包的路由。（也可以直接使用连接物理交换机的物理路由器）。
+    </p>
+    <p style="font-family:&quot;font-size:medium;">
+        <br />
+    </p>
+    <p style="font-family:&quot;font-size:medium;">
+        <br />
+    </p>
+    <h2 style="font-family:&quot;">
+        <p class="MsoNormal" align="left">
+            <br />
+        </p>
+    </h2>
+</div>
 </body>
 </html>

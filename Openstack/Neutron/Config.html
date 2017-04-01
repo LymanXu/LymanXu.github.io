@@ -5,209 +5,197 @@
     <title>Neutron's config配置文件和如何执行</title>
 </head>
 <body>
-<h2>
-    1、Neutron配置生效过程
-</h2>
-<p class="MsoNormal" align="left" style="background:white;">
-    当<span> Neutron L2 Agent </span>（<span>OVS Agent </span>或者<span> Linux Bridge agent</span>）在计算和网络节点上启动时，它会根据各种配置在节点上创建各种<span> bridge</span>。以<span> OVS Agent </span>为例，<span></span>
+<p style="text-align:center;font-family:&quot;margin-left:21pt;text-indent:-21pt;">
+    <br />
 </p>
-<p class="MsoNormal" align="left" style="background:white;">
-    （<span>1</span>）创建<span> intergration brige</span>（默认是<span> br-int</span>）；如果<span>&nbsp;enable_tunneling = true </span>的话，创建 tunnel bridge （默认是 br-tun）。
+<h1 style="text-align:center;font-family:&quot;">
+    配置内容和配置生效过程
+</h1>
+<h1 style="font-family:&quot;">
+    一、Neutron配置生效过程
+</h1>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+    当&nbsp;Neutron L2 Agent&nbsp;（OVS Agent&nbsp;或者&nbsp;Linux Bridge agent）在计算和网络节点上启动时，它会根据各种配置在节点上创建各种&nbsp;bridge。以&nbsp;OVS Agent&nbsp;为例，
 </p>
-<p class="MsoNormal" align="left" style="background:white;">
-    （2）根据 bridge_mappings，配置每一个 VLAN 和 Flat 网络使用的 physical
-    network interface 对应的预先创建的 OVS bridge。
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+    （1）创建&nbsp;intergration brige（默认是&nbsp;br-int）；如果&nbsp;enable_tunneling = true&nbsp;的话，创建 tunnel bridge （默认是 br-tun）。
 </p>
-<p class="MsoNormal" align="left" style="background:white;">
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+    （2）根据 bridge_mappings，配置每一个 VLAN 和 Flat 网络使用的 physical network interface 对应的预先创建的 OVS bridge。
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
     （3）所有虚机的 VIF 都是连接到 integration bridge。同一个虚拟网络上的 VM VIF 共享一个本地 VLAN （local VLAN）。Local VLAN ID 被映射到虚拟网络对应的物理网络的 segmentation_id。
 </p>
-<p class="MsoNormal" align="left" style="background:white;">
-    （4）对于 GRE 类型的虚拟网络，使用 LSI （Logical
-    Switch&nbsp;identifier）来区分隧道（tunnel）内的租户网络流量（tenant traffic）。这个隧道的两端都是每个物理服务器上的 tunneling bridge。使用 Patch port 来将 br-int 和 br-tun 连接起来。
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+    （4）对于 GRE 类型的虚拟网络，使用 LSI （Logical Switch&nbsp;identifier）来区分隧道（tunnel）内的租户网络流量（tenant traffic）。这个隧道的两端都是每个物理服务器上的 tunneling bridge。使用 Patch port 来将 br-int 和 br-tun 连接起来。
 </p>
-<p class="MsoNormal" align="left" style="background:white;">
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
     （5）对于每一个 VLAN 或者 Flat 类型的网络，使用一个 veth 或者一个 patch port 对来连接 br-int 和物理网桥，以及增加 flow rules等。
 </p>
-<p class="MsoNormal" align="left" style="background:white;">
-    （6）最后，Neutron L2 Agent
-    启动后会运行一个RPC循环任务来处理 端口添加、删除和修改。管理员可以通过配置项&nbsp;polling_interval
-    指定该 RPC 循环任务的执行间隔，默认为2秒。
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;background:white;">
+    （6）最后，Neutron L2 Agent 启动后会运行一个RPC循环任务来处理 端口添加、删除和修改。管理员可以通过配置项&nbsp;polling_interval 指定该 RPC 循环任务的执行间隔，默认为2秒。
 </p>
-<p class="MsoNormal">
-    <span>&nbsp;</span>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp;
 </p>
-<h2 style="margin-left:18.0pt;text-indent:-18.0pt;">
-    2、 local.conf example
-</h2>
-<p class="MsoListParagraph" style="margin-left:18.0pt;text-indent:0cm;">
-    <span>&nbsp;</span>
+<h1 style="font-family:&quot;margin-left:18pt;text-indent:-18pt;">
+    二、 local.conf example
+</h1>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>[[local|localrc]]</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    [[local|localrc]]
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>HOST_IP=192.168.56.101</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    HOST_IP=192.168.56.101
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>SERVICE_HOST=192.168.56.101</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    SERVICE_HOST=192.168.56.101
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>MYSQL_HOST=192.168.56.101</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    MYSQL_HOST=192.168.56.101
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>RABBIT_HOST=192.168.56.101</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    RABBIT_HOST=192.168.56.101
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>GLANCE_HOST=192.168.56.101</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    GLANCE_HOST=192.168.56.101
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>ADMIN_PASSWORD=password</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    ADMIN_PASSWORD=password
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>DATABASE_PASSWORD=password</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    DATABASE_PASSWORD=password
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>RABBIT_PASSWORD=password</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    RABBIT_PASSWORD=password
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>SERVICE_PASSWORD=password</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    SERVICE_PASSWORD=password
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>LOGFILE=/opt/stack/logs/stack.sh.log</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    LOGFILE=/opt/stack/logs/stack.sh.log
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>VERBOSE=True</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    VERBOSE=True
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>LOG_COLOR=True</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    LOG_COLOR=True
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>SCREEN_LOGDIR=/opt/stack/logs</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    SCREEN_LOGDIR=/opt/stack/logs
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span># Use
-Neutron instead of nova-network</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    # Use Neutron instead of nova-network
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>disable_service
-n-net</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    disable_service n-net
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-q-svc</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service q-svc
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-q-dhcp</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service q-dhcp
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-q-agt</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service q-agt
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-q-l3</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service q-l3
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-c-api</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service c-api
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-c-vol</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service c-vol
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_service
-c-sch</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_service c-sch
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>disable_service
-n-obj</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    disable_service n-obj
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>disable_service
-c-bak</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    disable_service c-bak
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>disable_service
-tempest</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    disable_service tempest
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>disable_service
-horizon</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    disable_service horizon
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>##
-Neutron options</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    ## Neutron options
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>Q_USE_SECGROUP=False</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    Q_USE_SECGROUP=False
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;<span style="background-color:#FFFFFF;"></span></span><span style="color:#E53333;"></span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;<span style="background-color:#FFFFFF;"></span><span style="color:#E53333;"></span>
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>NEUTRON_CREATE_INITIAL_NETWORKS=False</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    NEUTRON_CREATE_INITIAL_NETWORKS=False
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span># Open
-vSwitch provider networking configuration</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    # Open vSwitch provider networking configuration
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>Q_USE_PROVIDERNET_FOR_PUBLIC=True</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    Q_USE_PROVIDERNET_FOR_PUBLIC=True
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>OVS_PHYSICAL_BRIDGE=br-ex</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    OVS_PHYSICAL_BRIDGE=br-ex
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>PUBLIC_BRIDGE=br-ex</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    PUBLIC_BRIDGE=br-ex
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>OVS_BRIDGE_MAPPINGS=</span><span style="color:#E53333;"><span style="color:#E53333;">extern</span></span><span>:br-ex</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    OVS_BRIDGE_MAPPINGS=<span style="color:#E53333;">extern</span>:br-ex
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>PUBLIC_INTERFACE=enp0s8</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    PUBLIC_INTERFACE=enp0s8
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=(network_vlan_ranges=bridge:2001:3000,<span style="color:#E53333;">extern</span>:3001:4000)</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=(network_vlan_ranges=bridge:2001:3000,<span style="color:#E53333;">extern</span>:3001:4000)
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>&nbsp;</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp;
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_plugin
-neutron-lbaas https://github.com/openstack/neutron-lbaas.git</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_plugin neutron-lbaas https://github.com/openstack/neutron-lbaas.git
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-	<span>enable_plugin
-octavia https://github.com/openstack/octavia.git</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    enable_plugin octavia https://github.com/openstack/octavia.git
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;">
-    <span>ENABLED_SERVICES+=,q-lbaasv2</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    ENABLED_SERVICES+=,q-lbaasv2
 </p>
-<p class="MsoListParagraph" style="margin-left:18.0pt;text-indent:0cm;">
-    <span>ENABLED_SERVICES+=,octavia,o-cw,o-hk,o-hm,o-api</span>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:18pt;">
+    ENABLED_SERVICES+=,octavia,o-cw,o-hk,o-hm,o-api
+</p>
+<p>
+    <br />
 </p>
 </body>
 </html>
