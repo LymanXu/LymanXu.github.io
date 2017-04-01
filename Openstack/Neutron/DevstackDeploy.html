@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Devstack部署</title>
+</head>
+<body>
+<h1 style="font-family:&quot;margin-left:21pt;text-indent:-21pt;">
+    <strong>一、基本配置参数</strong>
+</h1>
+<h2 style="font-family:&quot;font-size:medium;margin-left:18pt;text-indent:-18pt;">
+    1. 虚拟机配置
+</h2>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:18pt;">
+    &nbsp; &nbsp;网络：
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;网卡1：连接方式：NAT &nbsp; &nbsp;控制：IntelPRO/1000 &nbsp;混杂：拒绝 &nbsp; 接入网线 true
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="font-family:&quot;font-size:medium;">网卡1：连接方式：桥接网卡 控制： Qualcomm Atheros &nbsp;&nbsp;</span><span style="font-family:&quot;font-size:medium;">混杂：全部允许 &nbsp;接入网线 true</span>
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    <span style="font-family:&quot;font-size:medium;"><span style="font-family:&quot;font-size:medium;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;网卡1：连接方式：<span style="font-family:&quot;font-size:medium;">桥接网卡</span> &nbsp; &nbsp;控制：Realtek PCIe&nbsp;&nbsp;</span><span style="font-family:&quot;font-size:medium;">混杂：全部允许 &nbsp;接入网线 true</span></span>
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+	<span style="font-family:&quot;font-size:medium;"><span style="font-family:&quot;font-size:medium;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;网卡1：连接方式：仅主机网络 控制：Virtual Host-Only &nbsp;&nbsp;</span><span style="font-family:&quot;font-size:medium;">混杂：拒绝 &nbsp; 接入网线 true</span><br />
+</span>
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp;&nbsp;&nbsp;系统：
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp; &nbsp; &nbsp; &nbsp;memory 7g, cpus 3, disk 40g
+</p>
+<h2 style="font-family:&quot;font-size:medium;margin-left:18pt;text-indent:-18pt;">
+    <strong>2. local.conf文件配置</strong>
+</h2>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    [[local|localrc]]<br />
+    HOST_IP=192.168.56.202<br />
+    SERVICE_HOST=192.168.56.202<br />
+    MYSQL_HOST=192.168.56.202<br />
+    RABBIT_HOST=192.168.56.202<br />
+    GLANCE_HOST=192.168.56.202<br />
+    ADMIN_PASSWORD=password<br />
+    DATABASE_PASSWORD=password<br />
+    RABBIT_PASSWORD=password<br />
+    SERVICE_PASSWORD=password<br />
+    LOGFILE=/opt/stack/logs/stack.sh.log<br />
+    VERBOSE=True<br />
+    LOG_COLOR=True<br />
+    SCREEN_LOGDIR=/opt/stack/logs<br />
+    #&nbsp;Use&nbsp;Neutron&nbsp;instead&nbsp;of&nbsp;nova-network<br />
+    disable_service&nbsp;n-net<br />
+    enable_service&nbsp;q-svc<br />
+    enable_service&nbsp;q-dhcp<br />
+    enable_service&nbsp;q-agt<br />
+    enable_service&nbsp;q-l3<br />
+    enable_service&nbsp;c-api<br />
+    enable_service&nbsp;c-vol<br />
+    enable_service&nbsp;c-sch<br />
+    disable_service&nbsp;n-obj<br />
+    disable_service&nbsp;c-bak<br />
+    disable_service&nbsp;tempest<br />
+    disable_service&nbsp;horizon<br />
+    ##&nbsp;Neutron&nbsp;options<br />
+    Q_USE_SECGROUP=False<br />
+    NEUTRON_CREATE_INITIAL_NETWORKS=False<br />
+    # Open vSwitch provider networking configuration
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    Q_USE_PROVIDERNET_FOR_PUBLIC=True
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    OVS_PHYSICAL_BRIDGE=br-ex
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    PUBLIC_BRIDGE=br-ex
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    <span style="background-color:#E53333;">OVS_BRIDGE_MAPPINGS=extern:br-ex</span>
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    PUBLIC_INTERFACE=enp0s8
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    Q_ML2_PLUGIN_VLAN_TYPE_OPTIONS=<span style="background-color:#E53333;">(network_vlan_ranges=bridge:2001:3000,extern:3001:4000)</span>
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    &nbsp;
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    enable_plugin neutron-lbaas https://github.com/openstack/neutron-lbaas.git
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    enable_plugin octavia https://github.com/openstack/octavia.git
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    ENABLED_SERVICES+=,q-lbaasv2
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    ENABLED_SERVICES+=,octavia,o-cw,o-hk,o-hm,o-api
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp;
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    <b>注意点:</b>
+</p>
+<p class="MsoNormal" align="left" style="font-family:&quot;font-size:medium;">
+    1. &nbsp;(注意这里的bridge-mapping要和下面的vlan对应)
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    2.&nbsp;在=后面千万不要有空格
+</p>
+<h1 style="font-family:&quot;font-size:medium;text-indent:0cm;">
+    二．&nbsp;linux命令所遇到的问题
+</h1>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;">
+    1. 文件拒绝访问，添加权限
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:18pt;">
+    Permission denied.
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:36pt;text-indent:-18pt;">
+    Ø&nbsp;&nbsp;ls –l /etc/sudoers&nbsp;查看权限
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:36pt;">
+    可以看到，/etc/sudoers为非目录，文件主有r(只读权限)，同组的用户有r权限，其他用户没有任何权限
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:36pt;text-indent:-18pt;">
+    Ø&nbsp; 添加权限，这里会遇到一个操作不被允许的问题
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:36pt;">
+    通过root用户进行权限修改
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp;
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    为用户添加sudo权限（修改sudoers文件）
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    http://www.cnblogs.com/youngerchina/p/5624473.html
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    <br />
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    <b>所遇问题：</b>
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    在sudoers文件中 加入
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    stack ALL=(ALL) ALL
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    切换到&nbsp;stack用户，新建文件夹失败，感觉权限修改没生效，其实是在上一个用户的目录下，导致非root用户没有权限。注意在chmod 777 /etc/sudoers&nbsp;，是所有用户对该文件都有权限，修改过后记得 恢复chmod 440 /etc/sudoers，否则会出现无法使用sudo命令。
+</p>
+<h1 style="font-family:&quot;">
+    三 搭建devstack
+</h1>
+<p>
+    1. 新建vm进行配置
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;text-indent:0cm;margin-left:18pt;">
+    网络：
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;网卡1：连接方式：NAT &nbsp; &nbsp;控制：IntelPRO/1000 &nbsp;混杂：拒绝 &nbsp; 接入网线 true
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="font-family:&quot;font-size:medium;">网卡1：连接方式：桥接网卡 控制： Qualcomm Atheros &nbsp;&nbsp;</span><span style="font-family:&quot;font-size:medium;">混杂：全部允许 &nbsp;接入网线 true</span>
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+    <span style="font-family:&quot;font-size:medium;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;网卡1：连接方式：桥接网卡&nbsp;&nbsp; &nbsp;控制：Realtek PCIe&nbsp;&nbsp;混杂：全部允许 &nbsp;接入网线 true</span>
+</p>
+<p class="MsoListParagraph" style="font-family:&quot;font-size:medium;margin-left:18pt;">
+	<span style="font-family:&quot;font-size:medium;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;网卡1：连接方式：仅主机网络 控制：Virtual Host-Only &nbsp;&nbsp;混杂：拒绝 &nbsp; 接入网线 true<br />
+</span>
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp;&nbsp;&nbsp;系统：
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;">
+    &nbsp; &nbsp; &nbsp; &nbsp;memory 7g, cpus 3, disk 40g
+</p>
+2. 安装Ubuntu系统时直接注册stack作为用户
+<p>
+    3. git clone https://git.openstack.org/openstack-dev/devstack
+</p>
+<p>
+    4. cd devstack， 创建local.conf 配置文件（注意： =前后 不需要空格，第一次被坑了好久）
+</p>
+<p>
+    5. devstack安装时，觉费时的是git clone各种组件代码
+</p>
+<p>
+    &nbsp; &nbsp; 手动clone需要的各个组件代码，在 /opt/stack<span style="font-family:&quot;font-size:medium;">录下clone</span><br />
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/nova.git /opt/stack/nova&nbsp;</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/glance.git /opt/stack/glance&nbsp;</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/cinder.git /opt/stack/cinder</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/horizon.git /opt/stack/horizon</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/keystone.git /opt/stack/keystone&nbsp;</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/neutron.git /opt/stack/neutron</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/swift.git /opt/stack/swift&nbsp;</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/heat.git /opt/stack/heat</span>
+</p>
+<p>
+    sudo git clone git:<span style="color:#008000;line-height:1.5 !important;">//</span><span style="color:#008000;line-height:1.5 !important;">git.openstack.org/openstack/ceilometer.git /opt/stack/ceilometer</span><br />
+    <span id="__kindeditor_bookmark_start_83__"></span>
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:24pt;">
+    6. 进行安装&nbsp;
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:24pt;">
+    &nbsp; ./stack.sh
+</p>
+<h1 style="font-family:&quot;">
+    四.&nbsp;配置基础环境及ssh连接
+</h1>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    1. Ubuntu常用国内源地址
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    &nbsp;<a href="http://wiki.ubuntu.com.cn/%E6%BA%90%E5%88%97%E8%A1%A8">http://wiki.ubuntu.com.cn/%E6%BA%90%E5%88%97%E8%A1%A8</a>
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    2.&nbsp;安装ssh
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    <a href="http://www.linuxidc.com/Linux/2016-12/137908.htm">http://www.linuxidc.com/Linux/2016-12/137908.htm</a>
+</p>
+<p class="MsoNormal" style="font-family:&quot;font-size:medium;text-indent:21pt;">
+    &nbsp;
+</p>
+</body>
+</html>
