@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>How improve neutron contributions for developer</title>
+</head>
+<body>
+<h4 style="text-align:left;">
+    <span><span style="color:#00D5FF;">返回上节</span><span style="color:#00D5FF;"></span><span style="color:#00D5FF;"></span></span>
+</h4>
+<h1 style="text-align:center;">
+    <span>How improve Neutron contributions</span>
+</h1>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>一、</span>插件开发<span></span>
+</h1>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>最后使用<span>mixin
+classes</span>，因为会引入不可预测性<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>代替<span>mixin</span>，如果需要添加与<span>ML2</span>相关的<span>behavior</span>，考虑<span>extension
+manager</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span>对数据库方法进行更新，考虑对后端<span>plugin</span>的影响<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>4、&nbsp; </span>对<span>ML2</span>的<span>plugin</span>修改时，以及使用<span>ML2plugin</span>的部分修改时，考虑对其他<span>plugin</span>的影响<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>5、&nbsp; </span>添加<span>behavior</span>到<span>L2</span>、<span>L3</span>，不要假定在消息代理的另一端有<span>agent</span>进行通信，<span>plugin</span>可能不依赖<span>agent</span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>二、</span>数据库方面
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span><span>first()</span>不抛出异常<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>不要使用<span>delete() </span>删除对象，<span>delete</span>不加载对象，不能触发<span>sql</span>事件进行父对象版本号的更新等操作<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span>如果在<span>select</span>语句中使用<span>group by</span>的话，那么<span>select</span>的内容要在<span>group by</span>使用，或是总计<span>sum(),count()</span>
+</p>
+<p class="MsoNormal" style="margin-left:39.0pt;">
+    <span> </span>
+</p>
+<pre class="prettyprint lang-java">incorrect:
+q = query(Object.id, Object.name,func.count(Object.number)).group_by(Object.name)
+correct:
+q = query(Object.id, Object.name,func.count(Object.number)).group_by(Object.id, Object.name)</pre>
+<p>
+    <br />
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>4、&nbsp; </span>意识到<span>InvalidRequestError
+exception,</span>嵌套事务块，内部块没有正确回滚都会发生此类<span>exception</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>5、&nbsp; </span>当设计相互关联的数据模型时，注意如何加数据载策略的关系，<span>example join</span>关系会更有效<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>6、&nbsp; </span>当对<span>Neutron</span>对象添加某个<span>relationship</span>时，在对象检索的主要情况都需要该相关对象，应该使用<span>lazy=’joined’</span>，以至于可以使相关对象可以作为查询加载的一部分。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>7、&nbsp; </span>反之，当这种<span>relationship</span>在很边角的情况下需要，不要使用<span>lazy=’joined’</span>，因为<span>join</span>是有代价的，当<span>relationship</span>包含很多对象时。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>8、&nbsp; </span>当对已有对象做扩展时，确保这些扩展无需额外的回查数据库可以被写。如果这是不可能的，那么确保<span>DB lookup</span>使用批处理在一系列操作中。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>9、&nbsp; </span>嵌套事务代码<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;&nbsp;&nbsp; </span>
+</p>
+<pre class="prettyprint lang-py">  def create():
+   with context.session.begin(subtransactions=True):
+       create_something()
+       try:
+           _do_other_thing_with_created_object()
+       except Exception:
+           with excutils.save_and_reraise_exception():
+               delete_something()
+
+def _do_other_thing_with_created_object():
+   with context.session.begin(subtransactions=True):
+       ....</pre>
+<p>
+    <br />
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    当<span>_do_other_thing_with_created_object()</span>抛出异常时，<span>except
+section</span>中的<span>object</span>不能被删除，因为内部事务从<span>_do_other_thing_with_created_object()</span>已经回滚。<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;&nbsp; </span>为了避免嵌套事务使用<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+	<span>_safe_creation(context,
+create_something, delete_something,</span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_do_other_thing_with_created_object)</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>10、&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>意识到<span>ResultProxy.inserted_primary_key</span>，返回插入的<span>primary keys</span>的<span>list,</span>而不是单一插入的<span>primary
+key,</span>即使你插入了一个特定行。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>11、&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>意识到<span>pymysql</span>可以静默的存入一组元素，<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <br />
+</p>
+<pre class="prettyprint lang-js">e.execute("create table if not exists foo (bar integer)")
+e.execute(foo.insert().values(bar=1))
+e.execute(foo.insert().values(bar=[2]))</pre>
+<p>
+    <br />
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    第二条语句会自动转换为<span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    <br />
+</p>
+<pre class="prettyprint lang-js">INSERT INTO foo (bar) VALUES (1)
+INSERT INTO foo (bar) VALUES ((2))</pre>
+<p>
+    <br />
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>三、</span>系统开发
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoNormal" style="margin-left:21.0pt;">
+    调用系统命令或和系统进行交互时<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>当补丁<span>patch</span>需要新的平台工具，或已有平台上新的特性时，检查常用平台是否带有上述功能。并且将该<span>patch</span>标记为<span>UpgradeImpact</span>提升可见性，引起<span>core team</span>的注意度。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>当新的<span>patch</span>，<span>code</span>需要依赖新的<span>kernel</span>或其他平台工具的特性，考虑引入理智的检查来验证预期功能的开发。<span></span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>四、</span><span>Eventlet</span>并发模型
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>在没使用<span>lockutils</span>信号量保护操作的情况下，不要使用<span>_lockmode(‘update’)</span>在<span>Sql</span>查询中<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:0cm;">
+    <span>@</span>不太懂<span></span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>五、</span>模仿和测试
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>倾向低级测试和全路径测试，在单元测试中更倾向前者，在功能测试中倾向后者<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>倾向具体断言，抛出有意义的<span>errors</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span>使用<span>self.assertEqual(excepted,observed);</span>有助于审查哪一个是<span>expected/observed</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>4、&nbsp; </span>倾向具体断言<span>assertions
+(assertTrue, assertFalse) over assertEqual(True/False, observed).</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>5、&nbsp; </span>不要写没有测试预期代码的<span>test</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>6、&nbsp; </span>避免大量使用模拟库来测试代码，如何代码需要多个模拟来确保测试，那它需要被重构为更小的可测试单元。否则通过<span>fullstack/tempest/apitests</span>我们得到的代码包含太多的依赖关系和副作用。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>7、&nbsp; </span><span>fix bug</span>需要一个测试防止回归，如果改动了代码，没有打破测试，这意味着代码没有被充分测试。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>8、&nbsp; </span>测试错误的情况，使用模拟抛出异常测试<span>’except’</span>语句<span></span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>六、</span>翻译和日志
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>熟悉<span>openstack
+logging guidelines</span>避免胡乱记录日志<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span><span>logger</span>只能转换为<span>Unicode</span>值，不要<span>pass exceptions or other objects
+directly(LOG.error(exc),LOG.error(port),etc)</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span>不要将<span>exception </span>转换为<span>LOG.exception,</span>在<span>python</span>的<span>logging
+module</span>中，<span>exception</span>隐含包括日志信息。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>4、&nbsp; </span>当前线程没有注册<span>exception</span>时不要使用<span>LOG.exception</span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>七、</span>适当调整补丁
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>没有必要的情况下，不要在一个补丁中进行多个更改，当做一些工作时顺便，清理旁边的功能或者修改一个小的<span>bug</span>都会使该<span>patch</span>很难<span>review</span>。即使显而易见的微小的变化，想重新格式化变更之外的空白也可以对审查造成负担，并导致合并冲突。<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>如何修复或功能需要代码重构，将重构的代码作为一个独立的<span>patch</span>，而不是改变逻辑的<span>patch</span>。否则<span>reviewer</span>很难分辨重构后的错误和对于<span>fix/feature</span>需要的改变。如果是<span>fix a bug</span>，在重构前实施<span>fix</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span>如果你可以以小的分片但是可以递增理解和测试的形式提交你的<span>patch</span>，更有可能吸引<span>reviewers.</span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>八、</span><span>reviewer </span>评论
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span>点击“<span>Done</span>”<span>,</span>或进行回复，逐一确认，否则<span>reviewer</span>会认为你觉得不重要，或你已经忘了<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>注意你的<span>patch</span>的反馈，尽快确认回复<span>reviewer,</span>否则可能被忽视结束<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span>个人不要做一些负面的反馈，<span>Neutron</span>参入的人有不同的文化、语言，有不同的见解。<span>Getting a -1,</span>意味着<span>reviewers</span>正在帮助<span>patch</span>达到可以<span>merge</span>，而非<span>block it</span>。第一次迭代很少可以<span>merged.</span>
+</p>
+<h1 style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span>九、</span><span>commit</span>信息
+</h1>
+<p class="MsoListParagraph" style="margin-left:21.0pt;text-indent:-21.0pt;">
+    <span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>1、&nbsp; </span><span>one liners</span>是不足的，除非改变是微不足道的<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>2、&nbsp; </span>适当使用<span>docImpact</span>、<span>ApiImpact</span>、<span>UpgradeImpact</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>3、&nbsp; </span><span>commit message</span>中没有拼写错误<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>4、&nbsp; </span>描述完成了什么改变。如果是<span>fix
+a bug</span>，解释<span>code</span>如何解决了这个问题。如果是功能的一部分的实现，解释这个<span>patch</span>实现了功能的那个部分。不要只描述<span>bug,</span>这是<span>launchpad</span>的工作<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>5、&nbsp; </span>如果修复了<span>bug,</span>使用<span>Closes-Bug:#BUG-NUMBER</span>的标签。提交非<span>launchpad</span>相关的<span>bug</span>修复，是不被接受的<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>6、&nbsp; </span>使用<span>”Implements:blueprint
+NAME-OF-BLUEPRIN</span>或<span>Partially-Implements:blueprint  NAME-OF-BLUEPRINT,</span>可以让<span>reviewer</span>更快确定<span>code</span>是否规格，这也更新<span>launchpad</span>上的蓝图，可以方便的看到与功能相关的所有<span>patch</span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>7、&nbsp; </span>如果不是比较明显的，那就解释之前的代码的错误之处<span></span>
+</p>
+<p class="MsoListParagraph" style="margin-left:39.0pt;text-indent:-18.0pt;">
+    <span>8、&nbsp; </span>在<span>commit</span>信息中具体说明这个<span>patch</span>做了什么，为什么要做。消息应该足够具体，<span>reviewer</span>审查<span>code</span>可以判断该<span>patch</span>是否以合适的方式做了<span>commit</span>时说的工作。<span></span>
+</p>
+</body>
+</html>
